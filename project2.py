@@ -8,6 +8,7 @@ import numpy as np
 import spacy
 from spanbert import SpanBERT
 import requests
+from bs4 import BeautifulSoup
 
 def google_search(query, google_api_key, google_engine_id):
     service = build(
@@ -64,30 +65,30 @@ def main():
             url = r['formattedUrl']
             print(url)
             print("URL ( {} / {}): {}".format(cnt, len(retrieved), url))
-            if url not in vis:
+            if url in vis:
+                print("        you should skip already-seen URLs")
+                continue
+            else:
                 vis.add(url)
-                print('Fetching text from url ...')
+                print('        Fetching text from url ...')
                 try:
                     webpage = requests.get(url)
                 except:
-                    print('if you cannot retrieve the webpage (e.g., because of a timeout), just skip it and move on')
+                    print('        if you cannot retrieve the webpage (e.g., because of a timeout), just skip it and move on')
                     continue
-            else:
-                print("you should skip already-seen URLs")
-                continue
-            print(webpage.text)
+
+            plain = BeautifulSoup(webpage.content, "html.parser").get_text(strip=True)
+            if len(plain)>10000:
+                print("        Trimming webpage content from {} to 10000 characters".format(len(plain)))
+                plain = plain[:10000]
+            print("        Webpage length (num characters): {}".format(len(plain)))
+            print("        Annotating the webpage using spacy...")
+            doc = nlp(plain)
+            sents = list(doc.sents)
+            print("Extracted {} sentences. Processing each sentence one by one to check for presence of right pair of "
+                  "named entity types; if so, will run the second pipeline ...".format(len(sents)))
 
         goal_check = True
-
-
-
-
-
-
-
-
-
-
 
 
 
